@@ -11,7 +11,7 @@ class Span:
         self.type = type # Options are "emotion" or "srl"
         self.label = label # Actual emotion or semantic role label
 
-    def __str__(self):
+    def __repr__(self):
         return f'{self.type}: {self.label} ({self.cbegin}:{self.cend})'
 
 class Document:
@@ -23,17 +23,39 @@ class Document:
         self.emotions = emotions
         self.srls = srls
     
-    def __str__(self):
+    def __repr__(self):
         return self.text
 
-class RemanData:
+class Dataset:
     def __init__(self, datadir, split):
         self.datadir = datadir
         self.docs = []
         self.split = split # train, dev, test, or None 
-    
-    def __str__(self):
+
+    def __repr__(self):
         return '\n'.join((str(d) for d in self.docs))
+    
+    def __iter__(self):
+        self.n = -1
+        return self
+
+    def __next__(self):
+        if self.n < len(self.docs):
+            self.n += 1
+            return self.docs[self.n-1]
+        else:
+            raise StopIteration
+    
+    def __getitem__(self, i):
+        return self.docs[i]
+    
+    def __len__(self):
+        return len(self.docs)
+
+
+class RemanData(Dataset):
+    def __init__(self, datadir, split):
+        super().__init__(datadir, split)
 
     def normalize_emotion(self, unnormalized_emotion):
         if unnormalized_emotion in REMAN_EMOTION_MAPPING:
@@ -78,11 +100,9 @@ class RemanData:
 
                 self.docs.append(Document(doc.attrib, text, formatted_spans, formatted_relations))
 
-class TweetData:
+class TweetData(Dataset):
     def __init__(self, datadir, split):
-        self.datadir = datadir
-        self.docs = []
-        self.split = split
+        super().__init__(datadir, split)
 
     def normalize_emotion(self, unnormalized_emotion):
         if unnormalized_emotion in TWEET_EMOTION_MAPPING:
