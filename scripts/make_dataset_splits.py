@@ -8,10 +8,47 @@ import os
 from tqdm import tqdm
 import xml.etree.ElementTree as ET
 import random
+from data import TweetData
 random.seed()
 
 
-def split_reman(datadir, dataset):
+def split_tweets(datadir):
+    tweet_data = TweetData(datadir, None)
+    tweet_data.read_data()
+    doc_ids = set()
+    for doc in tweet_data:
+        doc_ids.add(doc.metadata["unitid"])
+    
+    doc_ids = list(doc_ids)
+    random.shuffle(doc_ids)
+    
+    split1 = int(len(doc_ids)*0.7)
+    split2 = int(len(doc_ids)*0.85)
+
+    train, dev, test = doc_ids[:split1], doc_ids[split1:split2], doc_ids[split2:]
+
+    outdir = os.path.join(datadir, "ElectoralTweetsData/Annotated-US2012-Election-Tweets/Questionnaire2")
+
+    train_file = open(os.path.join(outdir, 'train_ids.txt'), 'w')
+    dev_file = open(os.path.join(outdir, 'dev_ids.txt'), 'w')
+    test_file = open(os.path.join(outdir, 'test_ids.txt'), 'w')
+
+    for doc in tweet_data:
+        did = doc.metadata["unitid"]
+        if did in train:
+            train_file.write(did + '\n')
+        elif did in dev:
+            dev_file.write(did + '\n')
+        elif did in test:
+            test_file.write(did + '\n')
+        else:
+            raise Exception
+
+    train_file.close()
+    dev_file.close()
+    test_file.close()
+
+def split_reman(datadir):
     tree = ET.parse(os.path.join(datadir, 'reman', 'reman-version1.0.xml'))
     root = tree.getroot()
     doc_ids = set()
@@ -39,11 +76,11 @@ def split_reman(datadir, dataset):
         except ValueError:
             did = doc.attrib['doc_id']
         if did in train:
-            train_file.write(did + '\n')
+            train_file.write(doc.attrib['doc_id'] + '\n')
         elif did in dev:
-            dev_file.write(did + '\n')
+            dev_file.write(doc.attrib['doc_id'] + '\n')
         elif did in test:
-            test_file.write(did + '\n')
+            test_file.write(doc.attrib['doc_id'] + '\n')
         else:
             raise Exception
 
@@ -53,9 +90,9 @@ def split_reman(datadir, dataset):
 
 def main(args):
     if args.dataset == 'reman':
-        split_reman(args.datadir, args.dataset)
+        split_reman(args.datadir)
     elif args.dataset == 'tweet':
-        NotImplementedError()
+        split_tweets(args.datadir)
     else:
         raise ValueError(f'Unknown dataset {args.dataset}')
 
