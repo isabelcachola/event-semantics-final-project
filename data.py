@@ -54,12 +54,13 @@ class Document:
         tokens = list(nltk.word_tokenize(self.text))
         token_spans = textspan.get_original_spans(tokens, self.text)
         for token, span in zip(tokens, token_spans):
-            sbegin, send = span[0]
-            label = 'O'
-            for em in self.emotions:
-                if sbegin >= em.cbegin and send <= em.cend:
-                    label = em.label
-            data.append((token, label))
+            if len(span) > 0:
+                ebegin, eend = span[0]
+                label = 'O'
+                for em in self.emotions:
+                    if ebegin >= em.cbegin and eend <= em.cend:
+                        label = em.label
+                data.append((token, label))
         return data
 
 

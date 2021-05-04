@@ -12,7 +12,8 @@ class LogisticRegression:
         pass
 
 class CRF:
-    def __init__(self):
+    def __init__(self, task):
+        self.task = task
         self.crf = sklearn_crfsuite.CRF(
             algorithm='lbfgs',
             c1=0.1,
@@ -20,16 +21,18 @@ class CRF:
             max_iterations=100,
             all_possible_transitions=True
         )
-        self.labels = ['experiencer', 'emotion', 'target']
 
     def featurize_data(self, data):
         X = []
         y =[]
         
         for i, doc in enumerate(data):
-            srl_labels = doc.get_srl_labels()
-            X.append(self.sent2features(srl_labels))
-            y.append(self.sent2labels(srl_labels))
+            if self.task == 'srl':
+                sents = doc.get_srl_labels()
+            elif self.task == 'emotion':
+                sents = doc.get_emotion_labels()
+            X.append(self.sent2features(sents))
+            y.append(self.sent2labels(sents))
 
         return X, y
 

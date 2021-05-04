@@ -53,11 +53,9 @@ def read_data(dataset, datadir, split='train'):
 
     return data, dicts
 
-def init_model(model_type):
-    if model_type =='logreg':
-        model = LogisticRegression()
-    elif model_type == 'crf':
-        model = CRF()
+def init_model(model_type, task):
+    if model_type == 'crf':
+        model = CRF(task)
     elif model_type == 'mlp':
         model = MLP()
     else:
@@ -79,8 +77,8 @@ def test(model, data):
     model.test(X_test, y_test)
 
 def main(args):
-    model = init_model(args.model_type)
-    model_path = os.path.join(args.outdir, f'{args.dataset}-{args.model_type}.joblib')
+    model = init_model(args.model_type, args.task)
+    model_path = os.path.join(args.outdir, f'{args.dataset}-{args.task}-{args.model_type}.joblib')
 
     if args.mode == 'train':
         train_data, dicts = read_data(args.dataset, args.datadir, split='train')
@@ -92,15 +90,16 @@ def main(args):
         model.load(model_path)
         test_data, dicts = read_data(args.dataset, args.datadir, split='test')
         test(model, test_data)
-        
+
     else:
         ValueError(f'Unkown mode {args.mode}')
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', choices=['train','test'])
-    parser.add_argument('model_type', choices=['logreg','crf','mlp'])
+    parser.add_argument('model_type', choices=['crf','mlp'])
     parser.add_argument('dataset', choices=['reman','tweet'])
+    parser.add_argument('task', choices=['srl','emotion'])
     parser.add_argument('outdir', help='path to save model weights or predictions')
     parser.add_argument('--datadir', default='./data', help='path to data dir')
     args = parser.parse_args()
