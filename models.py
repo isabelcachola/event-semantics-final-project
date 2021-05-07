@@ -6,19 +6,20 @@ from sklearn.model_selection import RandomizedSearchCV
 import scipy
 import nltk
 import joblib
+from pprint import pprint
 
 class LogisticRegression:
     def __init__(self):
         pass
 
 class CRF:
-    def __init__(self, task):
+    def __init__(self, task, c1=0.1, c2=0.1, max_iterations=100,):
         self.task = task
         self.crf = sklearn_crfsuite.CRF(
             algorithm='lbfgs',
-            c1=0.1,
-            c2=0.1,
-            max_iterations=100,
+            c1=c1,
+            c2=c2,
+            max_iterations=max_iterations,
             all_possible_transitions=True
         )
 
@@ -89,8 +90,9 @@ class CRF:
         y_pred = self.crf.predict(X)
         labels = list(self.crf.classes_)
         labels.remove('O')
-        print(metrics.flat_classification_report(y, y_pred,
-                            labels=labels))
+        report  = metrics.flat_classification_report(y, y_pred, labels=labels, output_dict=True)
+        pprint(report)
+        return report, y_pred
 
     def save(self, outpath):
         joblib.dump(self.crf, outpath)
