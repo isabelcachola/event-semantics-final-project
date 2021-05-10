@@ -13,8 +13,8 @@ from spacy.lang.en import English
 from nltk.tokenize import TweetTokenizer
 
 from data import RemanData, TweetData
-from models import LogisticRegression, CRF, MLP
-from utils import build_bow_reman, build_bow_tweet
+from utils import build_bow_reman, build_bow_tweet, get_examples_crf, get_examples_mlp
+from models import CRF, MLP
 
 def read_data(dataset, datadir, split='train'):
     if dataset == 'reman':
@@ -52,11 +52,18 @@ def read_data(dataset, datadir, split='train'):
 
     return data, dicts
 
-def init_model(model_type, task, c1=0.1, c2=0.1):
+def init_model(model_type, task, dataset,
+                c1=0.1, c2=0.1,
+                nepochs=5, 
+                batch_size=32,
+                hidden_dim=512):
     if model_type == 'crf':
         model = CRF(task, c1=c1, c2=c2)
     elif model_type == 'mlp':
-        model = MLP()
+        model = MLP(task, dataset, 
+                nepochs=nepochs, 
+                batch_size=batch_size,
+                hidden_dim=hidden_dim)
     else:
         raise ValueError(f'Uknown model type {model_type}')
 
@@ -73,49 +80,26 @@ def train(model, train_data, dev_data, outdir):
 
     return model
 
-def get_examples(X_test, y_pred, task, outdir):
-    tp, fp = [], []
-    for doc, y_hat in zip(X_test, y_pred):
-        curr_tp, curr_fp = [], []
-        text = doc.text
-        if task == 'srl':
-            y_true = doc.get_srl_labels()
-        elif task == 'emotion':
-            y_true = doc.get_emotion_labels()
-        for (word, l_true), l_hat in zip(y_true, y_hat):
-            if  l_true != 'O' and l_true == l_hat:
-                curr_tp.append((word, l_true))
-            if l_hat != 'O' and l_true != l_hat:
-                curr_fp.append((word, l_true, l_hat))
-        tp.append([text, curr_tp])
-        fp.append([text,curr_fp])
-    
-    with open(os.path.join(outdir, 'tp.txt'), 'w') as fout:
-        for doc in tp:
-            if len(doc[1]) > 0:
-                fout.write(f'{doc[0]}\n')
-                for w in doc[1]:
-                    fout.write(f'Word:{w[0]}\tYTrue:{w[1]}\n')
-                fout.write('\n\n')
-
-    with open(os.path.join(outdir, 'fp.txt'), 'w') as fout:
-        for doc in fp:
-            if len(doc[1]) > 0:
-                fout.write(f'{doc[0]}\n')
-                for w in doc[1]:
-                    fout.write(f'Word:{w[0]}\tYTrue:{w[1]}\tYPred:{w[2]}\n')
-                fout.write('\n\n')
-
-def test(model, data, task, outdir):
+def test(model, data, task, model_type, outdir):
     X_test, y_test = model.featurize_data(data)
     results, y_pred = model.test(X_test, y_test)
-    get_examples(data, y_test, y_pred, task, outdir)
+    if model_type == 'crf':
+        get_examples_crf(data, y_pred, task, outdir)
+    else:
+        get_examples_mlp(data, y_pred, task, outdir)
     with open(os.path.join(outdir, 'test-results.json'), 'w') as fout:
         json.dump(results, fout)
 
 def main(args):
-    model = init_model(args.model_type, args.task, c1=args.c1, c2=args.c2)
-    model_path = os.path.join(args.outdir, f'{args.dataset}-{args.task}-{args.model_type}.joblib')
+    model = init_model(args.model_type, args.task, args.dataset, 
+                        c1=args.c1, c2=args.c2,
+                        nepochs=args.nepochs, 
+                        batch_size=args.batch_size,
+                        hidden_dim=args.hidden_dim)
+    if args.model_type == 'crf':
+        model_path = os.path.join(args.outdir, f'{args.dataset}-{args.task}-{args.model_type}.joblib')
+    else:
+        model_path = args.outdir
 
     if args.mode == 'train':
         train_data, dicts = read_data(args.dataset, args.datadir, split='train')
@@ -126,7 +110,7 @@ def main(args):
     elif args.mode == 'test':
         model.load(model_path)
         test_data, dicts = read_data(args.dataset, args.datadir, split='test')
-        test(model, test_data, args.task, args.outdir)
+        test(model, test_data, args.task, args.model_type, args.outdir)
 
     else:
         ValueError(f'Unkown mode {args.mode}')
@@ -139,8 +123,14 @@ if __name__=="__main__":
     parser.add_argument('task', choices=['srl','emotion'])
     parser.add_argument('outdir', help='path to save model weights or predictions')
     parser.add_argument('--datadir', default='./data', help='path to data dir')
+    # CRF Hyperparams
     parser.add_argument('--c1', default=0.1, type=float)
     parser.add_argument('--c2', default=0.1, type=float)
+    # MLP Hyperparams
+    parser.add_argument('--nepochs', default=5, type=int)
+    parser.add_argument('--hidden_dim', default=512, type=int)
+    parser.add_argument('--batch_size', default=32, type=int)
+
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
