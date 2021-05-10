@@ -14,9 +14,6 @@ tweet_data.read_data()
 ```
 Both `RemanData` and `TweetData` take the data directory and datasplit as parameters. Use `split=None` to read full dataset.
 
-In the Twitter dataset, annotators has the option to mark `tweeter` as the experiencer, rather than annotating a span of text. 
-For these examples, the span indices are `(-1, -1)`. 
-
 Current normalization mappings are in `mapping.py`. All emotions are mapping to one of:
 - anger
 - fear
@@ -31,3 +28,14 @@ Current normalization mappings are in `mapping.py`. All emotions are mapping to 
 All SRL labels are normalized to "experiencer", "target", or None (emotion srl is inherent to emotion label).
 
 Emotion labels and SRLs that are normalized to None are skipped.
+
+## Training and Testing
+
+Use the `main.py` script to run training and testing. Run the following command:
+```{bash}
+python main.py {train|test} {crf|mlp} {reman|tweet} {srl|emotion} /path/to/outdir/ {optional hyperparameters}
+```
+
+All outputs to the script, including model weights, results json, and test examples, will be saved to the outdir.
+
+Training will automatically print and save results on the dev set.
