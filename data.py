@@ -189,18 +189,18 @@ class TweetData(Dataset):
         keep_doc = lambda did : True if self.split is None else (did in doc_ids)
         for _, doc in df.iterrows():
             if keep_doc(doc['unitid']):
-                text = doc['tweet']
+                text = "_tweeter_ " + doc['tweet']
 
                 em_start = text.find(doc[q7])
                 em_end = em_start + len(doc[q7])
                 emotion = [Span(em_start, em_end, doc[q2], "emotion")] 
 
-                ex_start = -1 if doc[q1].lower() == 'tweeter' else text.find(doc[q1])
-                ex_end = -1 if ex_start == -1 else (ex_start + len(doc[q1]))
+                ex_start = 0 if doc[q1].lower() == 'tweeter' else text.find(doc[q1])
+                ex_end = 9 if ex_start == 0 else (ex_start + len(doc[q1]))
                 experiencer = Span(ex_start, ex_end, 'experiencer', "srl")
 
-                tg_start = -1 if doc[q6].lower() == 'tweeter' else text.find(doc[q6])
-                tg_end = -1 if tg_start == -1 else (ex_start + len(doc[q6]))
+                tg_start = 0 if doc[q6].lower() == 'tweeter' else text.find(doc[q6])
+                tg_end = 9 if tg_start == 0 else (tg_start + len(doc[q6]))
                 target = Span(tg_start, tg_end, 'target', "srl")
                 srls = [experiencer, target]
 
