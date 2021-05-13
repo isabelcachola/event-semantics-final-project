@@ -1,6 +1,7 @@
 import os
 import tqdm
 from nltk.corpus import stopwords
+import pandas as pd
 
 def build_bow_tweet(data, tokenizer):
     ind2w = {}
@@ -118,3 +119,39 @@ def get_examples_crf(X_test, y_pred, task, outdir):
                 for w in doc[1]:
                     fout.write(f'Word:{w[0]}\tYTrue:{w[1]}\tYPred:{w[2]}\n')
                 fout.write('\n\n')
+
+def print_report(report, task):
+    if task == 'srl':
+        labels = [ 'target',
+                'experiencer',
+                'emotion',
+                'macro avg',
+                'micro avg',
+                'weighted avg']
+    else:
+        labels = [
+            'anger',
+            'fear',
+            'trust',
+            'disgust',
+            'joy',
+            'sadness',
+            'surprise',
+            'anticipation',
+            'macro avg',
+            'micro avg',
+            'weighted avg',
+        ]
+    print('precision\trecall\tf1-score')
+    rows = []
+    for l in labels:
+        row = [l]
+        line = l + '\t'
+        for metric in ['precision', 'recall', 'f1-score']:
+            score = round(report[l][metric]*100, 1)
+            line += str(score) + '\t'
+            row.append(score)
+        print(line)
+        rows.append(row)
+    df = pd.DataFrame(rows, columns=['label', 'precision', 'recall','f1'])
+    return df
