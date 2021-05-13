@@ -4,7 +4,7 @@ import nltk
 import numpy as np
 import joblib
 import pickle
-from pprint import pprint
+# from pprint import pprint
 import sklearn_crfsuite
 from sklearn_crfsuite import metrics
 from sklearn.feature_extraction import DictVectorizer
@@ -17,6 +17,8 @@ from keras.utils import np_utils
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.wrappers.scikit_learn import KerasClassifier
+
+from utils import print_report
 
 class CRF:
     def __init__(self, task, c1=0.1, c2=0.1, max_iterations=100,):
@@ -97,8 +99,8 @@ class CRF:
         labels = list(self.crf.classes_)
         labels.remove('O')
         report  = metrics.flat_classification_report(y, y_pred, labels=labels, output_dict=True)
-        pprint(report)
-        return report, y_pred
+        df = print_report(report, self.task)
+        return df, y_pred
 
     def save(self, outpath):
         joblib.dump(self.crf, outpath)
@@ -236,6 +238,9 @@ class MLP:
             y_dev =  np_utils.to_categorical(self.label_encoder.transform(y_dev))
             self.model_params['validation_data'] = (X_dev, y_dev),
 
+        callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
+        self.model_params['callbacks'] = [callback]
+
         self.clf = self.clf(**self.model_params)
         hist = self.clf.fit(X_train, y_train)
         self.plot_model_performance(
@@ -247,12 +252,12 @@ class MLP:
     
     def test(self, X_test, y_test):
         X_test = self.dict_vectorizer.transform(X_test)
-        y_pred = np.argmax(self.clf.predict(X_test), axis=1)
+        y_pred = self.clf.predict(X_test)
         y_pred = self.label_encoder.inverse_transform(y_pred).tolist()
         labels =  self.label_encoder.classes_.tolist()
         labels.remove('O')
         report  = classification_report(y_test, y_pred, labels=labels, output_dict=True)
-        pprint(report)
+        df = print_report(report, self.task)
         return report, y_pred
 
     def save(self, outdir):
