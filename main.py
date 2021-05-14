@@ -75,6 +75,7 @@ def train(model, train_data, dev_data, outdir):
 
     X_dev, y_dev = model.featurize_data(dev_data)
     dev_results, _ = model.test(X_dev, y_dev)
+    # dev_results.to_csv(os.path.join(outdir, 'dev-results.csv'), index=False)
     with open(os.path.join(outdir, 'dev-results.json'), 'w') as fout:
         json.dump(dev_results, fout)
 
@@ -89,6 +90,7 @@ def test(model, data, task, model_type, outdir):
         get_examples_mlp(data, y_pred, task, outdir)
     with open(os.path.join(outdir, 'test-results.json'), 'w') as fout:
         json.dump(results, fout)
+    # results.to_csv(os.path.join(outdir, 'test-results.csv'), index=False)
 
 def main(args):
     model = init_model(args.model_type, args.task, args.dataset, 

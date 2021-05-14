@@ -1,5 +1,14 @@
 # Event Semantics Final Project: Emotions and SRLs across domains
 
+## Getting started
+Clone this repository and install. We recommond installing in a virtual environment. Then install requirements.
+```{bash}
+git clone https://github.com/isabelcachola/event-semantics-final-project.git
+cd event-semantics-final-project
+pip install -e .
+pip install -r requirements.txt
+```
+
 ## Reading in data
 Download the datasets and unzip to one `data` directory. This code assumed the same directory structure as the unziped data.
 

@@ -1,0 +1,15 @@
+tensorflow
+keras
+matplotlib==3.4.1
+nltk==3.6.2
+numpy
+pandas==1.2.4
+pytextspan==0.5.4
+python-crfsuite==0.9.7
+pytokenizations==0.8.3
+scikit-learn==0.24.2
+sklearn==0.0
+sklearn-crfsuite==0.3.6
+spacy==3.0.6
+tqdm==4.60.0
+wordcloud==1.8.1
