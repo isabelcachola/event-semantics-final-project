@@ -253,6 +253,8 @@ class MLP:
     def test(self, X_test, y_test):
         X_test = self.dict_vectorizer.transform(X_test)
         y_pred = self.clf.predict(X_test)
+        if len(y_pred.shape) == 2:
+            y_pred = np.argmax(y_pred, axis=1)
         y_pred = self.label_encoder.inverse_transform(y_pred).tolist()
         labels =  self.label_encoder.classes_.tolist()
         labels.remove('O')
